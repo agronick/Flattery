@@ -4,12 +4,13 @@ import android.graphics.Canvas
 import util.geometry.Circle
 import util.geometry.Vector2
 import kotlin.math.ceil
+import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
-class Container(appList: List<PInfo>) {
+class Container(appList: List<PInfo>, density: Float) {
     private val rows: List<List<App>>
-    val size = 48
-    val margin = 2
+    val size = (StaticValues.normalAppSize * density).roundToInt()
+    val margin = (StaticValues.margin * density).roundToInt()
     private val iterate: Sequence<Triple<App, Int, Int>>
     var lastCircle: Circle? = null
 
@@ -103,7 +104,7 @@ class Container(appList: List<PInfo>) {
         return pos
     }
 
-    fun getClickedPackage(x: Float, y: Float): App? {
+    fun getAppAtPoint(x: Float, y: Float): App? {
         return iterate.find { it.first.intersects(x, y) }?.first
     }
 
@@ -120,7 +121,7 @@ class Container(appList: List<PInfo>) {
     }
 
     fun getLimit(x: Float, y: Float, size: Float): Pair<Float, Float> {
-        val halfSize = size * 0.5f
+        val halfSize = (lastCircle?.r ?: size) * 0.75f
         var outX = x
         var outY = y
         if (x - halfSize < leftLimit) {

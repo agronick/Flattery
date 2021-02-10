@@ -2,7 +2,6 @@ package com.agronick.launcher
 
 import android.graphics.Canvas
 import android.graphics.Rect
-import androidx.core.graphics.drawable.toBitmap
 import util.geometry.Circle
 import util.geometry.CircleCircleIntersection
 import util.geometry.Vector2
@@ -10,20 +9,20 @@ import util.geometry.Vector2
 class App(val pkgInfo: PInfo, var size: Int) {
     var left = 0.0f
     var top = 0.0f
-    var bitmap = pkgInfo.icon.toBitmap(size * 2, size * 2)
+    var hidden = false
     private var lastCircle: Circle? = null
 
-    fun asOpenAnimator(endSize: Int): App {
+    fun copy(): App {
         val other = App(pkgInfo, size)
         other.left = left
         other.top = top
-        other.bitmap = pkgInfo.icon.toBitmap(endSize * 2, endSize * 2)
         return other
     }
 
     fun drawNormal(canvas: Canvas) {
-        if (lastCircle != null) {
-            val radius = lastCircle!!.r
+        if (!hidden) {
+            val radius =
+                if (lastCircle !== null) (lastCircle!!.r).coerceAtLeast(10f) else size.toFloat()
             draw(canvas, radius, left, top)
         }
     }
@@ -33,17 +32,13 @@ class App(val pkgInfo: PInfo, var size: Int) {
     }
 
     fun draw(canvas: Canvas, radius: Float, x: Float, y: Float) {
-        canvas.drawBitmap(
-            bitmap,
-            null,
-            Rect(
-                (x - radius).toInt(),
-                (y - radius).toInt(),
-                (x + radius).toInt(),
-                (y + radius).toInt()
-            ),
-            null
+        pkgInfo.icon.bounds = Rect(
+            (x - radius).toInt(),
+            (y - radius).toInt(),
+            (x + radius).toInt(),
+            (y + radius).toInt()
         )
+        pkgInfo.icon.draw(canvas)
     }
 
     fun getCircle(faceCircle: Circle): Circle? {

@@ -8,26 +8,31 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.animation.doOnEnd
+import java.util.*
 
 class MainView(context: Context, appList: List<PInfo>) : View(context) {
-    init {
-        Runnable {
-            container = Container(appList)
-        }.run()
-    }
-
+    private var density: Float
     var onPackageClick: ((PInfo) -> Unit)? = null
 
     private lateinit var container: Container
-    private var offsetLeft = 0f
-    private var offsetTop = 0f
-
+    var offsetLeft = 0f
+    var offsetTop = 0f
     private var previousX: Float = 0f
     private var previousY: Float = 0f
     private var hasMoved = false
     private var canvasSize: Float = 0f
 
     private var openingApp: App? = null
+
+    init {
+        density = context.resources.displayMetrics.density
+        Runnable {
+            container = Container(appList, density)
+        }.run()
+    }
+
+    var holdTimer = Timer()
+    var reorderer: Reorderer? = null
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event != null) {
@@ -36,27 +41,38 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
                     previousX = event.x
                     previousY = event.y
                     hasMoved = false
+                    holdTimer.schedule(object : TimerTask() {
+                        override fun run() {
+                            reorderer = Reorderer(container, ::prepareInvalidate)
+                            val offset = getRelativePosition(Pair(event.x, event.y))
+                            post {
+                                reorderer!!.onHoldDown(offset.first, offset.second)
+                            }
+                        }
+                    }, 3000)
                     return true
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    val newOffsetLeft = offsetLeft + event.x - previousX
-                    val newOffsetTop = offsetTop + event.y - previousY
-                    val limited = container.getLimit(newOffsetLeft, newOffsetTop, canvasSize)
-                    offsetLeft = limited.first
-                    offsetTop = limited.second
-                    if (newOffsetLeft == limited.first) {
-                        previousX = event.x
-                    }
-                    if (newOffsetTop == limited.second) {
-                        previousY = event.y
-                    }
                     hasMoved = true
+                    if (reorderer == null) {
+                        offsetLeft += event.x - previousX
+                        offsetTop += event.y - previousY
+                        previousX = event.x
+                        previousY = event.y
+                    } else {
+                        val offset = getRelativePosition(Pair(event.x, event.y))
+                        reorderer!!.onMove(offset.first, offset.second)
+                    }
                     prepareInvalidate()
                     return true
                 }
                 MotionEvent.ACTION_UP -> {
+                    holdTimer.cancel()
+                    holdTimer = Timer()
                     if (!hasMoved) {
                         handleClick(event.x, event.y)
+                    } else {
+                        checkOverLimit()
                     }
                 }
             }
@@ -64,13 +80,42 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
         return super.onTouchEvent(event)
     }
 
-    fun handleClick(x: Float, y: Float) {
-        val offset = getOffset()
-        if (offset != null) {
-            val app = container.getClickedPackage(x - offset.first, y - offset.second)
-            if (app != null) {
-                setupOpenAnim(app.asOpenAnimator(canvasSize.toInt()))
+    fun checkOverLimit() {
+        val limited = container.getLimit(offsetLeft, offsetTop, canvasSize)
+        var animators = mutableListOf<ValueAnimator>()
+        if (offsetLeft != limited.first) {
+            animators.add(ValueAnimator.ofFloat(offsetLeft, limited.first)
+                .apply {
+                    addUpdateListener { animator ->
+                        offsetLeft = animator.animatedValue as Float
+                    }
+                }
+            )
+        }
+        if (offsetTop != limited.second) {
+            animators.add(ValueAnimator.ofFloat(offsetTop, limited.second)
+                .apply {
+                    addUpdateListener { animator ->
+                        offsetTop = animator.animatedValue as Float
+                    }
+                }
+            )
+        }
+        if (animators.isNotEmpty()) {
+            animators[0].addUpdateListener { prepareInvalidate() }
+            AnimatorSet().apply {
+                duration = StaticValues.durationOpen
+                playTogether(*animators.toTypedArray())
+                start()
             }
+        }
+    }
+
+    fun handleClick(x: Float, y: Float) {
+        val offset = getRelativePosition(Pair(x, y))
+        val app = container.getAppAtPoint(offset.first, offset.second)
+        if (app != null) {
+            setupOpenAnim(app.copy())
         }
     }
 
@@ -91,7 +136,7 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
                 }
             }
         val radiusAnimator =
-            ValueAnimator.ofFloat(app.size.toFloat(), canvasSize)
+            ValueAnimator.ofFloat(app.size.toFloat(), canvasSize * 0.5f)
                 .apply {
                     addUpdateListener { animator ->
                         app.size = ((animator.animatedValue as Float).toInt())
@@ -120,9 +165,13 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
         super.onSizeChanged(w, h, oldw, oldh)
     }
 
-    fun getOffset(): Pair<Float, Float>? {
+    fun getRelativePosition(point: Pair<Float, Float>? = null): Pair<Float, Float> {
         val halfSize = canvasSize * 0.5f
-        return Pair(halfSize + offsetLeft, halfSize + offsetTop)
+        val pos = Pair(halfSize + offsetLeft, halfSize + offsetTop)
+        if (point != null) {
+            return Pair(point.first - pos.first, point.second - pos.second)
+        }
+        return pos
     }
 
     fun prepareInvalidate() {
@@ -134,18 +183,13 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
     }
 
     override fun onDraw(canvas: Canvas?) {
-        Log.d(
-            TAG,
-            "draw called $offsetLeft $offsetTop"
-        )
         if (canvas == null) return
         Runnable {
-            val offset = getOffset()
-            if (offset != null) {
-                canvas.translate(offset.first, offset.second)
-                container.draw(canvas)
-                openingApp?.drawNormal(canvas)
-            }
+            val offset = getRelativePosition()
+            canvas.translate(offset.first, offset.second)
+            container.draw(canvas)
+            openingApp?.drawNormal(canvas)
+            reorderer?.draw(canvas)
         }.run()
     }
 }

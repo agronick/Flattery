@@ -24,6 +24,11 @@ class MainActivity : Activity() {
         }
 
         mainView = MainView(this.baseContext, getInstalledApps())
+        if (savedInstanceState != null) {
+            mainView.offsetLeft = savedInstanceState.getFloat("offsetLeft")
+            mainView.offsetTop = savedInstanceState.getFloat("offsetTop")
+        }
+
         setContentView(mainView)
         mainView.onPackageClick = this::onPackageClick
     }
@@ -56,4 +61,9 @@ class MainActivity : Activity() {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putFloat("offsetLeft", mainView.offsetLeft)
+        outState.putFloat("offsetTop", mainView.offsetTop)
+        super.onSaveInstanceState(outState)
+    }
 }
