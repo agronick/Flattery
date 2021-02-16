@@ -104,8 +104,13 @@ class Container(appList: List<PInfo>, density: Float) {
         return pos
     }
 
-    fun getAppAtPoint(x: Float, y: Float): App? {
-        return iterate.find { it.first.intersects(x, y) }?.first
+    fun getAppAtPoint(x: Float, y: Float, toIgnore: HashSet<App>? = null): App? {
+        return iterate.find {
+            (if (toIgnore != null) !toIgnore.contains(it.first) else true) && it.first.intersects(
+                x,
+                y
+            )
+        }?.first
     }
 
     fun prepare(offsetLeft: Float, offsetTop: Float, size: Float) {

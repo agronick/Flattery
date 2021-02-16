@@ -32,6 +32,11 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
     }
 
     var holdTimer = Timer()
+    var resetHold: () -> Unit = {
+        reorderer = null
+        holdTimer.cancel()
+        holdTimer = Timer()
+    }
     var reorderer: Reorderer? = null
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -43,10 +48,12 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
                     hasMoved = false
                     holdTimer.schedule(object : TimerTask() {
                         override fun run() {
-                            reorderer = Reorderer(container, ::prepareInvalidate)
                             val offset = getRelativePosition(Pair(event.x, event.y))
-                            post {
-                                reorderer!!.onHoldDown(offset.first, offset.second)
+                            val app = container.getAppAtPoint(offset.first, offset.second)
+                            if (app != null) {
+                                post {
+                                    reorderer = Reorderer(container, app, ::prepareInvalidate)
+                                }
                             }
                         }
                     }, 3000)
@@ -54,6 +61,7 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
                 }
                 MotionEvent.ACTION_MOVE -> {
                     hasMoved = true
+                    holdTimer.cancel()
                     if (reorderer == null) {
                         offsetLeft += event.x - previousX
                         offsetTop += event.y - previousY
@@ -67,8 +75,11 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
                     return true
                 }
                 MotionEvent.ACTION_UP -> {
-                    holdTimer.cancel()
-                    holdTimer = Timer()
+                    if (reorderer != null) {
+                        reorderer!!.onStopReorder()
+                        invalidate()
+                    }
+                    resetHold()
                     if (!hasMoved) {
                         handleClick(event.x, event.y)
                     } else {
@@ -82,7 +93,7 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
 
     fun checkOverLimit() {
         val limited = container.getLimit(offsetLeft, offsetTop, canvasSize)
-        var animators = mutableListOf<ValueAnimator>()
+        val animators = mutableListOf<ValueAnimator>()
         if (offsetLeft != limited.first) {
             animators.add(ValueAnimator.ofFloat(offsetLeft, limited.first)
                 .apply {

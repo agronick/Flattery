@@ -74,18 +74,20 @@ class App(val pkgInfo: PInfo, var size: Int) {
     }
 
     fun intersects(x: Float, y: Float): Boolean {
-        if (null == lastCircle) return false
-        val circle = getCircle(lastCircle!!)
-        val point = Circle(
-            Vector2(
-                x,
-                y
-            ), 3.0f
-        )
-        return CircleCircleIntersection(
-            circle,
-            point
-        ).type == CircleCircleIntersection.Type.ECCENTRIC_CONTAINED
+        val circle = lastCircle
+        if (circle != null) {
+            val point = Circle(
+                Vector2(
+                    x,
+                    y
+                ), 3.0f
+            )
+            return CircleCircleIntersection(
+                circle,
+                point
+            ).type == CircleCircleIntersection.Type.ECCENTRIC_CONTAINED
+        }
+        return false
     }
 
 }
