@@ -63,6 +63,22 @@ public final class Vector2 implements Serializable {
         return (float) atan2(y, x);
     }
 
+    public Vector2 div(float a) {
+        return new Vector2(x / a, y / a);
+    }
+
+    public Vector2 div(Vector2 a) {
+        return new Vector2(x / a.x, y / a.y);
+    }
+
+    public Vector2 midpoint(Vector2 a) {
+        return new Vector2(this.x + a.x, this.y + a.y).div(2f);
+    }
+
+    public float distance(Vector2 a) {
+        return (float) Math.sqrt(Math.pow((a.x - this.x), 2) + Math.pow((a.y - this.y), 2));
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
