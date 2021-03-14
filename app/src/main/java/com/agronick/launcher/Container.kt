@@ -1,14 +1,17 @@
 package com.agronick.launcher
 
 import android.graphics.Canvas
+import android.util.Log
 import util.geometry.Circle
 import util.geometry.Vector2
+import java.util.*
 import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 class Container(appList: List<PInfo>, density: Float) {
-    private val rows: List<List<App>>
+    private val rows: List<List<List<App>>>
     val size = (StaticValues.normalAppSize * density).roundToInt()
     val margin = (StaticValues.margin * density).roundToInt()
     private val iterate: Sequence<Triple<App, Int, Int>>
@@ -21,31 +24,53 @@ class Container(appList: List<PInfo>, density: Float) {
 
     private var equalizerOffset = 1.1f
 
+    companion object {
+        private const val tag = "Container"
+    }
+
     init {
-        val squareSize = Math.ceil(sqrt(appList.size.toFloat()).toDouble()).toInt()
         val appIter = appList.iterator()
-        rows = 1.rangeTo(squareSize).mapNotNull outer@{
-            val cols = 1.rangeTo(squareSize).mapNotNull inner@{
-                if (appIter.hasNext()) {
-                    return@inner App(
-                        appIter.next(),
-                        size
-                    )
+        // Area of a circle to radius
+        var appRadius = sqrt(appList.size.toFloat() / Math.PI)
+        val appDiam = appRadius * 2
+        val appRadiusSquared = appRadius * appRadius
+        rows = 0.rangeTo(floor(appRadius).toInt()).mapNotNull outer@{
+            // Pythagorean theorem - row length at each level
+            var rowDiam =
+                ((if (it == 0) appDiam else (sqrt(appRadiusSquared - (it * it)) * 2)) - 1).roundToInt()
+            val rowGroup = 0.rangeTo(if (it == 0) 0 else 1).mapNotNull middle@{
+                val cols = 0.rangeTo(rowDiam.toInt()).mapNotNull inner@{
+                    if (appIter.hasNext()) {
+                        return@inner App(
+                            appIter.next(),
+                            size
+                        )
+                    }
+                    return@inner null
                 }
-                return@inner null
+                return@middle if (cols.isNotEmpty()) cols else null
             }
-            return@outer if (cols.isNotEmpty()) cols else null
+            return@outer if (rowGroup.isNotEmpty()) rowGroup else null
         }
+
         iterate = sequence {
-            val iterator = this@Container.rows.iterator()
+            val iterator = rows.iterator()
             var rowCount = 0
             while (iterator.hasNext()) {
-                val row = iterator.next()
-                val colIterator = row.iterator()
+                val rows = iterator.next()
+                val positive = rows[0].iterator()
+                val negative = if (rows.size > 1) rows[1].iterator() else null
+
                 var colCount = 0
-                while (colIterator.hasNext()) {
-                    val app = colIterator.next()
+                while (positive.hasNext()) {
+                    val app = positive.next()
                     yield(Triple(app, rowCount, colCount))
+                    colCount++
+                }
+                colCount = 0
+                while (negative != null && negative.hasNext()) {
+                    val app = negative.next()
+                    yield(Triple(app, rowCount * -1, colCount))
                     colCount++
                 }
                 rowCount += 1
@@ -88,17 +113,20 @@ class Container(appList: List<PInfo>, density: Float) {
 
     private fun calcPositions(row: Int, col: Int): Pair<Float, Float> {
         var left = calcPosition(col) * equalizerOffset
-        if (ceil(row * 0.5) % 2 == 1.0) {
+        if (kotlin.math.abs(row) % 2 == 1) {
+            // Add offset for haxagon shape
             left -= size + margin
         }
-        val top = calcPosition(row)
+        val top = (row * (size * 2) + row * margin).toFloat()
+        Log.d(tag, "${left} ${top}")
         return Pair(left, top)
     }
 
     private fun calcPosition(num: Int): Float {
         var pos = ceil(num * 0.5f)
-        pos = (pos * (size * 2) + pos * margin)
+        pos = pos * (size * 2) + pos * margin
         if (num % 2 == 0) {
+            // Position right, the left of center
             pos *= -1
         }
         return pos

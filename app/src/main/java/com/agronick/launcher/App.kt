@@ -52,9 +52,12 @@ class App(val pkgInfo: PInfo, var size: Int) {
         )
         val intersects =
             CircleCircleIntersection(faceCircle, appCircle)
+        if (intersects.type == CircleCircleIntersection.Type.SEPARATE) {
+            return null
+        }
         if (!intersects.type.isContained) {
             val arcMidpoint = getArcMidpoint(intersects) ?: return null
-            var opposite = getPointClosestToCenter(faceCircle, appCircle)
+            val opposite = getPointClosestToCenter(faceCircle, appCircle)
             return Circle(
                 arcMidpoint.midpoint(opposite),
                 arcMidpoint.distance(opposite) * 0.5f
