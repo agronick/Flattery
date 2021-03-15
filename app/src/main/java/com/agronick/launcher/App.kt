@@ -28,11 +28,11 @@ class App(val pkgInfo: PInfo, var size: Int) {
         }
     }
 
-    fun prepare(faceCircle: Circle) {
-        lastCircle = getCircle(faceCircle)
+    fun prepare(faceCircle: Circle, checkCollisions: Boolean = true) {
+        lastCircle = getCircle(faceCircle, checkCollisions)
     }
 
-    fun draw(canvas: Canvas, radius: Float, x: Float, y: Float) {
+    private fun draw(canvas: Canvas, radius: Float, x: Float, y: Float) {
         pkgInfo.icon.bounds = Rect(
             (x - radius).toInt(),
             (y - radius).toInt(),
@@ -42,7 +42,7 @@ class App(val pkgInfo: PInfo, var size: Int) {
         pkgInfo.icon.draw(canvas)
     }
 
-    fun getCircle(faceCircle: Circle): Circle? {
+    private fun getCircle(faceCircle: Circle, checkCollisions: Boolean): Circle? {
         val startSize = size
         val appCircle = Circle(
             Vector2(
@@ -50,6 +50,9 @@ class App(val pkgInfo: PInfo, var size: Int) {
                 top
             ), startSize.toFloat()
         )
+        if (!checkCollisions) {
+            return appCircle
+        }
         val intersects =
             CircleCircleIntersection(faceCircle, appCircle)
         if (intersects.type == CircleCircleIntersection.Type.SEPARATE) {
@@ -77,7 +80,7 @@ class App(val pkgInfo: PInfo, var size: Int) {
                     2f
                 )
                 val R = intersection.c1.r
-                val F = R - kotlin.math.sqrt(R * R - lAB * lAB / 4)
+                val F = R - kotlin.math.sqrt(R * R - lAB * lAB * 0.25f)
                 Vector2(mAB.x - uAB.y * F, mAB.y + uAB.x * F)
             }
             else -> null
@@ -87,24 +90,18 @@ class App(val pkgInfo: PInfo, var size: Int) {
     private fun getPointClosestToCenter(faceCircle: Circle, appCircle: Circle): Vector2 {
         val vX = faceCircle.c.x - appCircle.c.x
         val vY = faceCircle.c.y - appCircle.c.y
-        val magV: Double = kotlin.math.sqrt((vX * vX + vY * vY).toDouble())
+        val magV = kotlin.math.sqrt((vX * vX + vY * vY).toDouble()).toFloat()
         val aX = appCircle.c.x + vX / magV * appCircle.r
         val aY = appCircle.c.y + vY / magV * appCircle.r
-        return Vector2(aX.toFloat(), aY.toFloat())
+        return Vector2(aX, aY)
     }
 
-    fun intersects(x: Float, y: Float): Boolean {
+    fun intersects(point: Vector2): Boolean {
         val circle = lastCircle
         if (circle != null) {
-            val point = Circle(
-                Vector2(
-                    x,
-                    y
-                ), 3.0f
-            )
             return CircleCircleIntersection(
                 circle,
-                point
+                Circle(point, 3.0f)
             ).type == CircleCircleIntersection.Type.ECCENTRIC_CONTAINED
         }
         return false

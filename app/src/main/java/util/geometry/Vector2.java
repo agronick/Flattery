@@ -79,6 +79,16 @@ public final class Vector2 implements Serializable {
         return (float) Math.sqrt(Math.pow((a.x - this.x), 2) + Math.pow((a.y - this.y), 2));
     }
 
+    /**
+     * Returns the angle between the given two points
+     */
+    public double angleBetween(Vector2 a) {
+        Vector2 diff = this.sub(a);
+        double angle = Math.atan2(diff.y, diff.x);
+        double degrees = 180 * angle / Math.PI;
+        return ((360 + Math.round(degrees)) - 90) % 360;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;

@@ -29,17 +29,25 @@ class Container(appList: List<PInfo>, density: Float) {
     }
 
     init {
+        /*
+        Tries to set up a rough circle shape
+        Rows are stored using the outer array index as y pos and inner array as x pos
+        The middle array holds up to 2 items, one to be drawn at positive y and one at negative y
+        rows = [
+           [[row at y], [row at y index * -1]]
+        ]
+         */
         val appIter = appList.iterator()
         // Area of a circle to radius
-        var appRadius = sqrt(appList.size.toFloat() / Math.PI)
+        val appRadius = sqrt(appList.size.toFloat() / Math.PI)
         val appDiam = appRadius * 2
         val appRadiusSquared = appRadius * appRadius
         rows = 0.rangeTo(floor(appRadius).toInt()).mapNotNull outer@{
             // Pythagorean theorem - row length at each level
-            var rowDiam =
-                ((if (it == 0) appDiam else (sqrt(appRadiusSquared - (it * it)) * 2)) - 1).roundToInt()
+            val rowDiam =
+                ((if (it == 0) appDiam else (sqrt(appRadiusSquared - (it * it)) * 2) - 1)).roundToInt()
             val rowGroup = 0.rangeTo(if (it == 0) 0 else 1).mapNotNull middle@{
-                val cols = 0.rangeTo(rowDiam.toInt()).mapNotNull inner@{
+                val cols = 0.rangeTo(rowDiam).mapNotNull inner@{
                     if (appIter.hasNext()) {
                         return@inner App(
                             appIter.next(),
@@ -132,11 +140,10 @@ class Container(appList: List<PInfo>, density: Float) {
         return pos
     }
 
-    fun getAppAtPoint(x: Float, y: Float, toIgnore: HashSet<App>? = null): App? {
+    fun getAppAtPoint(point: Vector2, toIgnore: HashSet<App>? = null): App? {
         return iterate.find {
             (if (toIgnore != null) !toIgnore.contains(it.first) else true) && it.first.intersects(
-                x,
-                y
+                point
             )
         }?.first
     }

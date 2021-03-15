@@ -33,11 +33,6 @@ class MainActivity : Activity() {
         mainView.onPackageClick = this::onPackageClick
     }
 
-    override fun onPause() {
-        super.onPause()
-        mainView.invalidate()
-    }
-
     fun onPackageClick(pkg: PInfo) {
         val name = ComponentName(pkg.pname, pkg.activityName)
         val i = Intent(Intent.ACTION_MAIN)
@@ -65,5 +60,20 @@ class MainActivity : Activity() {
         outState.putFloat("offsetLeft", mainView.offsetLeft)
         outState.putFloat("offsetTop", mainView.offsetTop)
         super.onSaveInstanceState(outState)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mainView.openingApp = null
+        mainView.allHidden = true
+        mainView.invalidate()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (mainView.allHidden) {
+            mainView.allHidden = false
+            mainView.invalidate()
+        }
     }
 }
