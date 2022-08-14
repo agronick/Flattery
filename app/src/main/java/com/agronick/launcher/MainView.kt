@@ -18,9 +18,6 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
     private lateinit var container: Container
     var offsetLeft = 0f
     var offsetTop = 0f
-    private var previousX: Float = 0f
-    private var previousY: Float = 0f
-    private var hasMoved = false
     private var canvasSize: Float = 0f
     private var edgeLimit = 100000f
     var allHidden = false
@@ -33,97 +30,50 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
         }.run()
     }
 
-    var holdTimer = Timer()
     var edgeTimer = Timer()
-    val resetHold: () -> Unit = {
-        reorderer = null
-        holdTimer.cancel()
-        holdTimer = Timer()
-    }
     val resetEdge: () -> Unit = {
         edgeTimer.cancel()
         edgeTimer = Timer()
     }
     var reorderer: Reorderer? = null
 
+    fun handleLongPress(event: MotionEvent) {
+        val offset = getRelativePosition(Pair(event.x, event.y))
+        if (reorderer != null) {
+            if (event.action == MotionEvent.ACTION_UP) {
+                reorderer!!.onStopReorder(container.getAppAtPoint(Vector2(offset.x, offset.y)))
+                reorderer = null
+            } else {
+                reorderer!!.onMove(offset)
+                val newOffsets =
+                    reorderer!!.checkAtEdge(offset, container.lastCircle, container.appCircleSize)
+                if (newOffsets != null) {
+                    offsetLeft += newOffsets.x
+                    offsetTop += newOffsets.y
+                }
+                prepareInvalidate()
+            }
+        } else {
+            val app = container.getAppAtPoint(Vector2(offset.x, offset.y))
+            if (app != null) {
+                post {
+                    reorderer = Reorderer(container, app, ::prepareInvalidate)
+                    performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                }
+            }
+        }
+    }
+
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event != null) {
             when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    previousX = event.x
-                    previousY = event.y
-                    hasMoved = false
-                    holdTimer.schedule(object : TimerTask() {
-                        override fun run() {
-                            val offset = getRelativePosition(Pair(event.x, event.y))
-                            val app = container.getAppAtPoint(Vector2(offset.x, offset.y))
-                            if (app != null) {
-                                post {
-                                    reorderer = Reorderer(container, app, ::prepareInvalidate)
-                                    performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
-                                }
-                            }
-                        }
-                    }, 2000)
-                    return true
-                }
                 MotionEvent.ACTION_MOVE -> {
-                    hasMoved = true
-                    holdTimer.cancel()
                     resetEdge()
-                    if (reorderer == null) {
-                        offsetLeft += event.x - previousX
-                        offsetTop += event.y - previousY
-                        previousX = event.x
-                        previousY = event.y
-                    } else {
-                        val offset = getRelativePosition(Pair(event.x, event.y))
-                        reorderer!!.onMove(offset)
-                        val newOffsets = reorderer!!.checkAtEdge(offset, container.lastCircle)
-                        if (newOffsets != null) {
-                            moveAtEdge(newOffsets.scale(density * 3))
-                        }
-                    }
-                    prepareInvalidate()
                     return true
-                }
-                MotionEvent.ACTION_UP -> {
-                    if (reorderer != null) {
-                        reorderer!!.onStopReorder()
-                        invalidate()
-                    }
-                    resetHold()
-                    if (!hasMoved) {
-                        handleClick(event.x, event.y)
-                    } else {
-                        checkOverPanLimit()
-                    }
                 }
             }
         }
         return super.onTouchEvent(event)
-    }
-
-    fun moveAtEdge(newOffsets: Vector2) {
-        edgeTimer.schedule(object : TimerTask() {
-            override fun run() {
-                offsetLeft += newOffsets.x
-                offsetTop += newOffsets.y
-                val curReorderer = reorderer
-                if (curReorderer !== null) {
-                    val appPos = curReorderer.getAppPos()
-                    post {
-                        curReorderer.onMove(
-                            Vector2(
-                                appPos.x - newOffsets.x,
-                                appPos.y - newOffsets.y
-                            )
-                        )
-                    }
-                }
-                prepareInvalidate()
-            }
-        }, 0, 33)
     }
 
     fun checkOverPanLimit() {
@@ -160,7 +110,7 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
     fun handleClick(x: Float, y: Float) {
         val offset = getRelativePosition(Pair(x, y))
         val app = container.getAppAtPoint(offset)
-        if (app != null) {
+        if (app != null && app.pkgInfo.activityName != null) {
             setupOpenAnim(app.copy())
         }
     }
@@ -235,7 +185,6 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
             canvas.translate(offset.x, offset.y)
             container.draw(canvas)
             openingApp?.drawNormal(canvas)
-            reorderer?.draw(canvas)
         }.run()
     }
 }

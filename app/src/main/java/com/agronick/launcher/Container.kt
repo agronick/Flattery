@@ -12,8 +12,8 @@ import kotlin.math.sqrt
 
 class Container(appList: List<PInfo>, density: Float) {
     private val rows: List<List<List<App>>>
-    val size = (StaticValues.normalAppSize * density).roundToInt()
-    val margin = (StaticValues.margin * density).roundToInt()
+    val appCircleSize = (StaticValues.normalAppSize * density).roundToInt()
+    val appCircleMargin = (StaticValues.margin * density).roundToInt()
     private val iterate: Sequence<Triple<App, Int, Int>>
     var lastCircle: Circle? = null
 
@@ -40,7 +40,7 @@ class Container(appList: List<PInfo>, density: Float) {
         val appIter = appList.iterator()
         // Area of a circle to radius
         val appRadius = sqrt(appList.size.toFloat() / Math.PI)
-        val appDiam = appRadius * 2
+        val appDiam = PreferenceManager.getSetDiam(appRadius * 2)
         val appRadiusSquared = appRadius * appRadius
         rows = 0.rangeTo(floor(appRadius).toInt()).mapNotNull outer@{
             // Pythagorean theorem - row length at each level
@@ -51,7 +51,7 @@ class Container(appList: List<PInfo>, density: Float) {
                     if (appIter.hasNext()) {
                         return@inner App(
                             appIter.next(),
-                            size
+                            appCircleSize
                         )
                     }
                     return@inner null
@@ -123,16 +123,16 @@ class Container(appList: List<PInfo>, density: Float) {
         var left = calcPosition(col) * equalizerOffset
         if (kotlin.math.abs(row) % 2 == 1) {
             // Add offset for haxagon shape
-            left -= size + margin
+            left -= appCircleSize + appCircleMargin
         }
-        val top = (row * (size * 2) + row * margin).toFloat()
+        val top = (row * (appCircleSize * 2) + row * appCircleMargin).toFloat()
         Log.d(tag, "${left} ${top}")
         return Pair(left, top)
     }
 
     private fun calcPosition(num: Int): Float {
         var pos = ceil(num * 0.5f)
-        pos = pos * (size * 2) + pos * margin
+        pos = pos * (appCircleSize * 2) + pos * appCircleMargin
         if (num % 2 == 0) {
             // Position right, the left of center
             pos *= -1

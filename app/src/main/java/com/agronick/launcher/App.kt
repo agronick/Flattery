@@ -33,13 +33,14 @@ class App(val pkgInfo: PInfo, var size: Int) {
     }
 
     private fun draw(canvas: Canvas, radius: Float, x: Float, y: Float) {
-        pkgInfo.icon.bounds = Rect(
+        if (pkgInfo.icon == null) return
+        pkgInfo.icon!!.bounds = Rect(
             (x - radius).toInt(),
             (y - radius).toInt(),
             (x + radius).toInt(),
             (y + radius).toInt()
         )
-        pkgInfo.icon.draw(canvas)
+        pkgInfo.icon!!.draw(canvas)
     }
 
     private fun getCircle(faceCircle: Circle, checkCollisions: Boolean): Circle? {
