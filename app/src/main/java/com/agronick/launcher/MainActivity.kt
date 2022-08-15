@@ -11,8 +11,8 @@ import android.view.Window
 import androidx.core.view.GestureDetectorCompat
 
 
-
 class MainActivity : Activity(), GestureDetector.OnGestureListener {
+    private var wasScrolling = false
     private lateinit var mDetector: GestureDetectorCompat
     private lateinit var mainView: MainView
 
@@ -45,8 +45,9 @@ class MainActivity : Activity(), GestureDetector.OnGestureListener {
         } else if (mainView.reorderer != null) {
             mainView.handleLongPress(event)
             return true
-        } else if (mainView.wasScrolling && event.action == MotionEvent.ACTION_UP) {
+        } else if (wasScrolling && event.action == MotionEvent.ACTION_UP) {
             mainView.checkOverPanLimit()
+            wasScrolling = false
             return true
         } else {
             super.onTouchEvent(event)
@@ -114,8 +115,10 @@ class MainActivity : Activity(), GestureDetector.OnGestureListener {
         distanceX: Float,
         distanceY: Float
     ): Boolean {
-        mainView.handleScroll(distanceX, distanceY)
-        mainView.wasScrolling = true
+        mainView.offsetLeft -= distanceX
+        mainView.offsetTop -= distanceY
+        mainView.prepareInvalidate()
+        wasScrolling = true
         return true
     }
 

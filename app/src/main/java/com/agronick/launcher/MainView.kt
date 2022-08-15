@@ -4,7 +4,6 @@ import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
-import android.util.Log
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
@@ -23,19 +22,6 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
     private var canvasSize: Float = 0f
     private var edgeLimit = 100000f
     var allHidden = false
-
-    var scrollEndFn: (() -> Unit)? = null
-    var wasScrolling = false
-        set(value: Boolean) {
-            if (!wasScrolling) {
-                Log.e(StaticValues.tag, "ScrollEndFn without scroll")
-            }
-            if (scrollEndFn != null) {
-                scrollEndFn!!()
-                scrollEndFn = null
-            }
-            field = value
-        }
 
     private val STATE_NONE = 0
     private val STATE_REORDERING = 1
@@ -98,26 +84,19 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
         val offset = getRelativePosition(Pair(event.x, event.y))
         if (state == STATE_REORDERING) {
             if (event.action == MotionEvent.ACTION_UP) {
-                val scrollEndEvent = {
-                    reorderer!!.onStopReorder(
-                        when (container.getLimit(offsetLeft, offsetTop, canvasSize)) {
-                            Pair(offsetLeft, offsetTop) -> container.getAppAtPoint(
-                                Vector2(
-                                    offset.x,
-                                    offset.y
-                                )
+                reorderer!!.onStopReorder(
+                    when (container.getLimit(offsetLeft, offsetTop, canvasSize)) {
+                        Pair(offsetLeft, offsetTop) -> container.getAppAtPoint(
+                            Vector2(
+                                offset.x,
+                                offset.y
                             )
-                            else -> null
-                        }
-                    )
-                    reorderer = null
-                    resetReorderEdgeTimer()
-                }
-                if (wasScrolling) {
-                    scrollEndFn = scrollEndEvent
-                } else {
-                    scrollEndEvent()
-                }
+                        )
+                        else -> null
+                    }
+                )
+                reorderer = null
+                resetReorderEdgeTimer()
             } else {
                 reorderer!!.onMove(offset)
                 val newOffsets =
@@ -168,10 +147,7 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
                 duration = StaticValues.durationOpen
                 playTogether(*animators.toTypedArray())
                 start()
-                doOnEnd { wasScrolling = false }
             }
-        } else {
-            wasScrolling = false
         }
     }
 
