@@ -2,7 +2,6 @@ package com.agronick.launcher
 
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
-import android.util.Log
 import androidx.core.animation.doOnEnd
 import util.geometry.Circle
 import util.geometry.Vector2
@@ -67,6 +66,7 @@ class Reorderer(
         } else {
             animateAppPosition(overApp, suppressedAppCopy.left, suppressedAppCopy.top)
             animateAppPosition(app, overApp.left, overApp.top)
+            PreferenceManager.swap(app.pkgInfo, overApp.pkgInfo)
         }
         ValueAnimator.ofInt((suppressedAppCopy.size * 1.4).toInt(), suppressedAppCopy.size)
             .apply {
@@ -82,11 +82,10 @@ class Reorderer(
     }
 
 
-    fun checkAtEdge(offsetVector: Vector2, lastCircle: Circle?, radius: Int): Vector2? {
+    fun checkAtEdge(offsetVector: Vector2, lastCircle: Circle?, density: Float): Vector2? {
         if (lastCircle == null) return null
-        val maxDistance = lastCircle.r
-        Log.d("offset", "${offsetVector.distance(lastCircle.c)} >= ${maxDistance}")
-        if (offsetVector.distance(lastCircle.c) >= maxDistance - radius) {
+        val maxDistance = lastCircle.r * density
+        if (offsetVector.distance(lastCircle.c) >= maxDistance) {
             val angle = Math.toRadians(lastCircle.c.angleBetween(offsetVector)).toFloat()
             return Vector2(kotlin.math.sin(angle) * -2, kotlin.math.cos(angle) * 2)
         }

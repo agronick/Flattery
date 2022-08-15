@@ -3,13 +3,14 @@ package com.agronick.launcher
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import java.util.*
+import kotlin.collections.ArrayList
 
 object PreferenceManager {
     private var preferences =
         Launcher.appContext.getSharedPreferences("prefs", Context.MODE_PRIVATE)
     private var editor = preferences.edit()
-    private var appOrder = preferences.getString("app_order", "")?.split(";")?.toTypedArray()!!
-        .toCollection(ArrayList())
+    private lateinit var appOrder: ArrayList<String>
     private var sep = ";"
 
     fun getSetDiam(value: Double): Double {
@@ -32,7 +33,7 @@ object PreferenceManager {
                 order = null
             )
         }.toMap().toMutableMap()
-        val prefList = preferences.getString("app_order", null) ?: return asMapp.values.toList()
+        val prefList = preferences.getString("app_order", "")
         val blankPinfo = PInfo(
             appname = null,
             pname = null,
@@ -41,10 +42,19 @@ object PreferenceManager {
             order = null
         )
         val matchedItems =
-            prefList.split(sep).toTypedArray().map { asMapp.remove(it) ?: blankPinfo }
+            prefList!!.split(sep).toTypedArray().map { asMapp.remove(it) ?: blankPinfo }
                 .toMutableList()
+        if (matchedItems.size == 1 && matchedItems.first().appname == null) {
+            matchedItems.clear()
+        }
         matchedItems.addAll(asMapp.values)
-        matchedItems.mapIndexed { order, pInfo -> pInfo.order = order }
+        matchedItems.removeIf { it.pname?.startsWith("com.agronick.launcher") ?: false }
+        val orderedItems = LinkedList<String>()
+        matchedItems.forEachIndexed { order, pInfo ->
+            pInfo.order = order
+            orderedItems.add(pInfo.pname ?: "")
+        }
+        appOrder = orderedItems.toCollection(ArrayList())
         return matchedItems
     }
 

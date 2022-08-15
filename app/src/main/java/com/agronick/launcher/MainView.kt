@@ -12,6 +12,7 @@ import util.geometry.Vector2
 import java.util.*
 
 class MainView(context: Context, appList: List<PInfo>) : View(context) {
+    private var edgeTimer: Timer? = null
     private var density: Float = context.resources.displayMetrics.density
     var onPackageClick: ((PInfo) -> Unit)? = null
 
@@ -30,26 +31,61 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
         }.run()
     }
 
-    var edgeTimer = Timer()
-    val resetEdge: () -> Unit = {
-        edgeTimer.cancel()
-        edgeTimer = Timer()
-    }
     var reorderer: Reorderer? = null
+
+    fun resetReorderEdgeTimer() {
+        edgeTimer?.cancel()
+    }
+
+    fun reorderAtEdge(newOffsets: Vector2) {
+        resetReorderEdgeTimer()
+        edgeTimer = Timer()
+        edgeTimer?.schedule(object : TimerTask() {
+            override fun run() {
+                offsetLeft += newOffsets.x
+                offsetTop += newOffsets.y
+                val curReorderer = reorderer
+                if (curReorderer !== null) {
+                    val appPos = curReorderer.getAppPos()
+                    post {
+                        curReorderer.onMove(
+                            Vector2(
+                                appPos.x - newOffsets.x,
+                                appPos.y - newOffsets.y
+                            )
+                        )
+                    }
+                }
+                prepareInvalidate()
+            }
+        }, 0, 33)
+    }
 
     fun handleLongPress(event: MotionEvent) {
         val offset = getRelativePosition(Pair(event.x, event.y))
         if (reorderer != null) {
             if (event.action == MotionEvent.ACTION_UP) {
-                reorderer!!.onStopReorder(container.getAppAtPoint(Vector2(offset.x, offset.y)))
+                reorderer!!.onStopReorder(
+                    when (container.getLimit(offsetLeft, offsetTop, canvasSize)) {
+                        Pair(offsetLeft, offsetTop) -> container.getAppAtPoint(
+                            Vector2(
+                                offset.x,
+                                offset.y
+                            )
+                        )
+                        else -> null
+                    }
+                )
                 reorderer = null
+                resetReorderEdgeTimer()
             } else {
                 reorderer!!.onMove(offset)
                 val newOffsets =
-                    reorderer!!.checkAtEdge(offset, container.lastCircle, container.appCircleSize)
+                    reorderer!!.checkAtEdge(offset, container.lastCircle, density * 0.3f)
                 if (newOffsets != null) {
-                    offsetLeft += newOffsets.x
-                    offsetTop += newOffsets.y
+                    reorderAtEdge(newOffsets.scale(density * 3))
+                } else {
+                    resetReorderEdgeTimer()
                 }
                 prepareInvalidate()
             }
@@ -62,18 +98,6 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
                 }
             }
         }
-    }
-
-    override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if (event != null) {
-            when (event.action) {
-                MotionEvent.ACTION_MOVE -> {
-                    resetEdge()
-                    return true
-                }
-            }
-        }
-        return super.onTouchEvent(event)
     }
 
     fun checkOverPanLimit() {
