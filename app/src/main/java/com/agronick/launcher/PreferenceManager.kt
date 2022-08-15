@@ -60,8 +60,8 @@ object PreferenceManager {
 
     fun swap(pinfo1: PInfo, pinfo2: PInfo) {
         // Swap in array
-        appOrder[pinfo1.order!!] = pinfo2.pname!!
-        appOrder[pinfo2.order!!] = pinfo1.pname!!
+        appOrder[pinfo1.order!!] = pinfo2.pname ?: ""
+        appOrder[pinfo2.order!!] = pinfo1.pname ?: ""
 
         // Swap on objects
         val temp = pinfo1.order

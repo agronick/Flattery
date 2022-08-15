@@ -7,5 +7,6 @@ class StaticValues {
         val durationRise = 300L
         val durationSwap = 300L
         val durationOpen = 600L
+        val tag = "Flattery"
     }
 }

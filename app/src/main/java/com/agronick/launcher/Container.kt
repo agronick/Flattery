@@ -1,7 +1,6 @@
 package com.agronick.launcher
 
 import android.graphics.Canvas
-import android.util.Log
 import util.geometry.Circle
 import util.geometry.Vector2
 import java.util.*
@@ -126,7 +125,6 @@ class Container(appList: List<PInfo>, density: Float) {
             left -= appCircleSize + appCircleMargin
         }
         val top = (row * (appCircleSize * 2) + row * appCircleMargin).toFloat()
-        Log.d(tag, "${left} ${top}")
         return Pair(left, top)
     }
 

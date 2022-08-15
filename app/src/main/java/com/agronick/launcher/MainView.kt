@@ -4,6 +4,7 @@ import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
+import android.util.Log
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
@@ -23,6 +24,29 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
     private var edgeLimit = 100000f
     var allHidden = false
 
+    var scrollEndFn: (() -> Unit)? = null
+    var wasScrolling = false
+        set(value: Boolean) {
+            if (!wasScrolling) {
+                Log.e(StaticValues.tag, "ScrollEndFn without scroll")
+            }
+            if (scrollEndFn != null) {
+                scrollEndFn!!()
+                scrollEndFn = null
+            }
+            field = value
+        }
+
+    private val STATE_NONE = 0
+    private val STATE_REORDERING = 1
+    private val STATE_OPENING = 2
+
+    private fun getActiveState(): Int {
+        if (reorderer != null) return STATE_REORDERING
+        if (openingApp != null) return STATE_OPENING
+        return STATE_NONE
+    }
+
     var openingApp: App? = null
 
     init {
@@ -32,6 +56,13 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
     }
 
     var reorderer: Reorderer? = null
+
+    fun handleScroll(distanceX: Float, distanceY: Float) {
+        if (getActiveState() != STATE_NONE) return
+        offsetLeft -= distanceX
+        offsetTop -= distanceY
+        prepareInvalidate()
+    }
 
     fun resetReorderEdgeTimer() {
         edgeTimer?.cancel()
@@ -62,22 +93,31 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
     }
 
     fun handleLongPress(event: MotionEvent) {
+        val state = getActiveState()
+        if (state == STATE_OPENING) return
         val offset = getRelativePosition(Pair(event.x, event.y))
-        if (reorderer != null) {
+        if (state == STATE_REORDERING) {
             if (event.action == MotionEvent.ACTION_UP) {
-                reorderer!!.onStopReorder(
-                    when (container.getLimit(offsetLeft, offsetTop, canvasSize)) {
-                        Pair(offsetLeft, offsetTop) -> container.getAppAtPoint(
-                            Vector2(
-                                offset.x,
-                                offset.y
+                val scrollEndEvent = {
+                    reorderer!!.onStopReorder(
+                        when (container.getLimit(offsetLeft, offsetTop, canvasSize)) {
+                            Pair(offsetLeft, offsetTop) -> container.getAppAtPoint(
+                                Vector2(
+                                    offset.x,
+                                    offset.y
+                                )
                             )
-                        )
-                        else -> null
-                    }
-                )
-                reorderer = null
-                resetReorderEdgeTimer()
+                            else -> null
+                        }
+                    )
+                    reorderer = null
+                    resetReorderEdgeTimer()
+                }
+                if (wasScrolling) {
+                    scrollEndFn = scrollEndEvent
+                } else {
+                    scrollEndEvent()
+                }
             } else {
                 reorderer!!.onMove(offset)
                 val newOffsets =
@@ -89,11 +129,12 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
                 }
                 prepareInvalidate()
             }
-        } else {
+        } else if (state == STATE_NONE) {
             val app = container.getAppAtPoint(Vector2(offset.x, offset.y))
             if (app != null) {
                 post {
-                    reorderer = Reorderer(container, app, ::prepareInvalidate)
+                    reorderer =
+                        Reorderer(container, app, ::prepareInvalidate, container.appCircleSize)
                     performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
                 }
             }
@@ -127,11 +168,15 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
                 duration = StaticValues.durationOpen
                 playTogether(*animators.toTypedArray())
                 start()
+                doOnEnd { wasScrolling = false }
             }
+        } else {
+            wasScrolling = false
         }
     }
 
     fun handleClick(x: Float, y: Float) {
+        if (getActiveState() != STATE_NONE) return
         val offset = getRelativePosition(Pair(x, y))
         val app = container.getAppAtPoint(offset)
         if (app != null && app.pkgInfo.activityName != null) {
@@ -140,6 +185,8 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
     }
 
     fun setupOpenAnim(app: App) {
+        if (getActiveState() != STATE_NONE) return
+
         val face = container.lastCircle ?: return
         openingApp = app
 
@@ -171,6 +218,7 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
             doOnEnd {
                 postDelayed({
                     onPackageClick?.let { it1 -> it1(app.pkgInfo) }
+                    openingApp = null
                 }, 200)
             }
             start()

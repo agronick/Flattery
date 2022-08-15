@@ -9,7 +9,8 @@ import util.geometry.Vector2
 class Reorderer(
     private val container: Container,
     private var app: App,
-    val invalidate: () -> Unit
+    val invalidate: () -> Unit,
+    val defaultCircleSize: Int
 ) {
     private var suppressedAppCopy: App = app.copy()
     private var lastPosition = HashSet<App>()
@@ -68,7 +69,7 @@ class Reorderer(
             animateAppPosition(app, overApp.left, overApp.top)
             PreferenceManager.swap(app.pkgInfo, overApp.pkgInfo)
         }
-        ValueAnimator.ofInt((suppressedAppCopy.size * 1.4).toInt(), suppressedAppCopy.size)
+        ValueAnimator.ofInt((suppressedAppCopy.size * 1.4).toInt(), defaultCircleSize)
             .apply {
                 duration = StaticValues.durationRise
                 addUpdateListener { animator ->
