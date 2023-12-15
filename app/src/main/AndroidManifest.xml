@@ -28,8 +28,9 @@
 
         <activity
             android:name=".MainActivity"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.Wearable.Modal">
+            android:theme="@style/Theme.Wearable.Modal"
+            android:exported="true"
+            android:taskAffinity="com.agronick.launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

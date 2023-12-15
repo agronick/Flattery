@@ -4,10 +4,10 @@ import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.animation.doOnEnd
+import timber.log.Timber
 
 class MainView(context: Context, appList: List<PInfo>) : View(context) {
     init {
@@ -95,7 +95,7 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
                 .apply {
                     addUpdateListener { animator ->
                         app.size = ((animator.animatedValue as Float).toInt())
-                        Log.d(TAG, "At size ${app.size}")
+                        Timber.d("At size ${app.size}")
                         container.lastCircle?.let { app.prepare(it) }
                         invalidate()
                     }
@@ -133,19 +133,15 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
         }.run()
     }
 
-    override fun onDraw(canvas: Canvas?) {
-        Log.d(
-            TAG,
+    override fun onDraw(canvas: Canvas) {
+        Timber.d(
             "draw called $offsetLeft $offsetTop"
         )
-        if (canvas == null) return
-        Runnable {
-            val offset = getOffset()
-            if (offset != null) {
-                canvas.translate(offset.first, offset.second)
-                container.draw(canvas)
-                openingApp?.drawNormal(canvas)
-            }
-        }.run()
+        val offset = getOffset()
+        if (offset != null) {
+            canvas.translate(offset.first, offset.second)
+            container.draw(canvas)
+            openingApp?.drawNormal(canvas)
+        }
     }
 }

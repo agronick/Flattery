@@ -8,11 +8,9 @@ import android.transition.Fade
 import android.view.Window
 
 
-var TAG = "main"
 
 class MainActivity : Activity() {
     private lateinit var mainView: MainView
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         with(window) {
@@ -35,12 +33,13 @@ class MainActivity : Activity() {
 
     fun onPackageClick(pkg: PInfo) {
         val name = ComponentName(pkg.pname, pkg.activityName)
-        val i = Intent(Intent.ACTION_MAIN)
-        i.addCategory(Intent.CATEGORY_LAUNCHER)
-        i.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
-        i.component = name
-        startActivity(i)
+        with(Intent(Intent.ACTION_MAIN)) {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+            component = name
+            startActivity(this)
+        }
     }
 
     private fun getInstalledApps(): List<PInfo> {
