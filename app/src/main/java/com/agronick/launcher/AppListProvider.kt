@@ -11,7 +11,7 @@ import java.io.FileReader
 import java.io.FileWriter
 
 
-class AppListProvider(val appList: List<PInfo>, context: Context) {
+class AppListProvider(appList: List<PInfo>, context: Context) {
 
     val positions = HashMap<Int, HashMap<Int, PInfo?>>().withDefault { HashMap() }
     val filePath = "${context.dataDir}/appPositions.json"

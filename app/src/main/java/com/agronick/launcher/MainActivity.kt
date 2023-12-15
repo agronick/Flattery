@@ -131,9 +131,7 @@ class MainActivity : Activity(), GestureDetector.OnGestureListener {
     }
 
     override fun onLongPress(e: MotionEvent) {
-        if (e != null) {
-            mainView.handleLongPress(e)
-        }
+        mainView.handleLongPress(e)
     }
 
     override fun onFling(

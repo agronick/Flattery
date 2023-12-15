@@ -3,7 +3,6 @@ package com.agronick.launcher
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import androidx.core.animation.doOnEnd
-import kotlinx.coroutines.GlobalScope
 import util.geometry.Circle
 import util.geometry.Vector2
 

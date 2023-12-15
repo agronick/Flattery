@@ -11,7 +11,7 @@ class App(val pkgInfo: PInfo, var size: Int) {
     var left = 0.0f
     var top = 0.0f
     var hidden = false
-    public var assignedPos: Pair<Int, Int>? = null
+    var assignedPos: Pair<Int, Int>? = null
     private var lastCircle: Circle? = null
 
     fun copy(): App {
@@ -84,6 +84,7 @@ class App(val pkgInfo: PInfo, var size: Int) {
                 val F = R - kotlin.math.sqrt(R * R - lAB * lAB * 0.25f)
                 Vector2(mAB.x - uAB.y * F, mAB.y + uAB.x * F)
             }
+
             else -> null
         }
     }

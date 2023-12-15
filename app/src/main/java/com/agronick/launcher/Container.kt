@@ -22,10 +22,6 @@ class Container(val appList: AppListProvider, density: Float) {
 
     private var equalizerOffset = 1.1f
 
-    companion object {
-        private const val tag = "Container"
-    }
-
     init {
         /*
         Tries to set up a rough circle shape
