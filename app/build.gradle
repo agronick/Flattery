@@ -1,6 +1,13 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
+Properties props = new Properties()
+props.load(new FileInputStream("$project.rootDir/version.properties"))
+
+def versionMajor = props.getProperty("majorVersion") as Integer
+def versionMinor = props.getProperty("minorVersion") as Integer
+def versionPatch = props.getProperty("patchVersion") as Integer
+
 android {
     compileSdk 34
     namespace = "com.agronick.launcher"
@@ -9,9 +16,8 @@ android {
         applicationId "com.agronick.launcher"
         minSdkVersion 28
         targetSdkVersion 34
-        versionCode 1
-        versionName "1.0"
-
+        versionCode versionMajor * 100 + versionMinor * 10 + versionPatch
+        versionName "${versionMajor}.${versionMinor}.${versionPatch}"
     }
 
     buildTypes {
@@ -26,7 +32,7 @@ android {
         targetCompatibility JavaVersion.VERSION_19
     }
 
-    kotlinOptions{
+    kotlinOptions {
         jvmTarget = JavaVersion.VERSION_19
     }
 }

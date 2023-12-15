@@ -1,0 +1,91 @@
+name: ci
+on: [ push ]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '19'
+
+      - name: Cache Gradle and wrapper
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+
+      - name: Build Release apk
+        run: ./gradlew lintRelease
+
+  build_deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      discussions: write
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '19'
+
+      - name: Restore keystore
+        run: echo ${{ secrets.DEBUG_KEYSTORE }} | base64 -d > $HOME/debug.keystore
+
+      - name: Cache Gradle and wrapper
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+
+      - name: Bump version
+        id: bump_version
+        if: github.repository == 'agronick/flattery'
+        uses: oflynned/android-version-bump@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: rickstaa/action-create-tag@v1
+        id: "tag_create"
+        with:
+          tag: "latest"
+          tag_exists_error: false
+          force_push_tag: true
+          message: "Latest release"
+
+      - name: Build Release apk
+        if: github.repository == 'agronick/flattery'
+        run: >
+          ./gradlew assembleRelease 
+          -Pandroid.injected.signing.store.file=$HOME/debug.keystore 
+          -Pandroid.injected.signing.key.alias=androiddebugkey 
+          -Pandroid.injected.signing.store.password=android 
+          -Pandroid.injected.signing.key.password=android
+
+      - name: Build Release apk for forked repos
+        if: github.repository != 'agronick/flattery'
+        run: >
+          ./gradlew assembleRelease 
+
+      - name: Rename release
+        run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/flattery.apk
+
+      - name: Create Github Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.bump_version.outputs.new_tag || 'latest' }}
+          name: ${{ steps.bump_version.outputs.new_tag || 'latest' }}
+          generate_release_notes: true
+          draft: true
+          files: |
+            app/build/outputs/apk/release/flattery.apk
+            app/build/outputs/mapping/release/mapping.txt
