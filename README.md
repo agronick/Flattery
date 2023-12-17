@@ -7,4 +7,8 @@ Flattery is a laucher for Wear OS that looks like the other guys launcher. Insta
 
 It is not in the app store yet. See [this guide](https://www.reddit.com/r/WearOS/comments/p1l9of/how_to_install_apps_on_wear_os_all_methods/) on how to sideload apps on WearOS.
 
+<img src="https://github.com/agronick/Flattery/assets/2042303/99917ae6-b39a-476e-bcc2-a85ea5ca265f" alt="Running on a Galaxy Watch 4" height="250"/>
+
 <img src="https://github.com/agronick/Flattery/assets/2042303/c9ac9c51-7ba8-42c3-8e47-1c4e8c18b1ea" alt="Running on a Galaxy Watch 4" width="250"/>
+
+<img src="https://github.com/agronick/Flattery/assets/2042303/cb81414f-cfe5-41fe-9491-a4dabfa35d14" alt="Reordering" width="250"/>
