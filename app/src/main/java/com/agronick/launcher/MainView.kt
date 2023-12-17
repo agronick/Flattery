@@ -26,6 +26,7 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
     private var canvasSize: Float = 0f
     private var edgeLimit = 100000f
     var allHidden = false
+    private var lastInvalidate = 0L
 
     private val STATE_NONE = 0
     private val STATE_REORDERING = 1
@@ -223,12 +224,13 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
     }
 
     fun prepareInvalidate() {
-        if (canvasSize == 0f) return
-        Runnable {
-            container.prepare(offsetLeft, offsetTop, canvasSize)
-            reorderer?.prepare()
-            invalidate()
-        }.run()
+        // Prevent flickering / allow vsync
+        val now = System.currentTimeMillis()
+        if (canvasSize == 0f || now - lastInvalidate < 33) return
+        lastInvalidate = now
+        container.prepare(offsetLeft, offsetTop, canvasSize)
+        reorderer?.prepare()
+        invalidate()
     }
 
     override fun onDraw(canvas: Canvas) {

@@ -99,21 +99,15 @@ class App(val pkgInfo: PInfo, var size: Int) {
         return Vector2(aX, aY)
     }
 
-    fun intersects(point: Vector2): Boolean {
-        val circle = lastCircle
-        if (circle != null) {
-            return CircleCircleIntersection(
-                Circle(point, 3.0f),
-                circle,
-            ).type.let {
-                it == CircleCircleIntersection.Type.ECCENTRIC_CONTAINED
-            }
-        }
-        return false
+    fun distance(point: Vector2): Float {
+        return lastCircle?.c?.distance(point) ?: Float.POSITIVE_INFINITY
+    }
+
+    fun radius(): Float {
+        return lastCircle?.r ?: (size * 0.5f)
     }
 
     override fun toString(): String {
         return pkgInfo.pname ?: "Unmapped"
     }
-
 }

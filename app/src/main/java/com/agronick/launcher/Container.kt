@@ -130,11 +130,14 @@ class Container(val appList: AppListProvider, density: Float) {
     }
 
     fun getAppAtPoint(point: Vector2, toIgnore: HashSet<App>? = null): App? {
-        return flatAppList.find {
-            (if (toIgnore != null) !toIgnore.contains(it) else true) && it.intersects(
-                point
-            )
-        }
+        return flatAppList.mapNotNull mapping@{
+            if (toIgnore?.contains(it) == true) return@mapping null
+            val distance = it.distance(point)
+            if (distance > it.radius()) return@mapping null
+            return@mapping it to distance
+        }.minByOrNull {
+            it.second
+        }?.first
     }
 
     fun prepare(offsetLeft: Float, offsetTop: Float, size: Float) {
