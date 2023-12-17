@@ -97,14 +97,7 @@ class Container(val appList: AppListProvider, density: Float) {
     }
 
     fun draw(canvas: Canvas) {
-        flatAppList.filter {
-            return@filter if (it.drawLast) {
-                true
-            } else {
-                it.drawNormal(canvas)
-                false
-            }
-        }.forEach {
+        flatAppList.sortedBy { it.zIndex }.forEach {
             it.drawNormal(canvas)
         }
     }

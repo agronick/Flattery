@@ -18,7 +18,7 @@ class Reorderer(
     private val appList = container.appList
 
     init {
-        app.drawLast = true
+        app.zIndex = 2
         lastPosition.add(app)
         suppressedAppCopy.hidden = true
         ValueAnimator.ofInt(app.size, (app.size * 1.4).toInt())
@@ -59,7 +59,7 @@ class Reorderer(
             playTogether(xAnim, yAnim)
             doOnEnd {
                 lastPosition.remove(app)
-                app.drawLast = false
+                app.zIndex = -1
             }
             start()
         }
@@ -69,6 +69,7 @@ class Reorderer(
         if (overApp == null) {
             animateAppPosition(app, suppressedAppCopy.left, suppressedAppCopy.top)
         } else {
+            overApp.zIndex = 1
             Timber.i("Sending ${overApp} to ${suppressedAppCopy.left} ${suppressedAppCopy.top}")
             animateAppPosition(overApp, suppressedAppCopy.left, suppressedAppCopy.top)
             Timber.i("Sending ${app} to ${overApp.left} ${overApp.top}")

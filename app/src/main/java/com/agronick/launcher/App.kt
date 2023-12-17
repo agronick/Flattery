@@ -10,7 +10,7 @@ import util.geometry.Vector2
 class App(val pkgInfo: PInfo, var size: Int) {
     var left = 0.0f
     var top = 0.0f
-    var drawLast = false
+    var zIndex = -1
     var hidden = false
     var assignedPos: Pair<Int, Int>? = null
     private var lastCircle: Circle? = null
