@@ -10,6 +10,7 @@ import util.geometry.Vector2
 class App(val pkgInfo: PInfo, var size: Int) {
     var left = 0.0f
     var top = 0.0f
+    var drawLast = false
     var hidden = false
     var assignedPos: Pair<Int, Int>? = null
     private var lastCircle: Circle? = null
@@ -102,11 +103,17 @@ class App(val pkgInfo: PInfo, var size: Int) {
         val circle = lastCircle
         if (circle != null) {
             return CircleCircleIntersection(
+                Circle(point, 3.0f),
                 circle,
-                Circle(point, 3.0f)
-            ).type == CircleCircleIntersection.Type.ECCENTRIC_CONTAINED
+            ).type.let {
+                it == CircleCircleIntersection.Type.ECCENTRIC_CONTAINED
+            }
         }
         return false
+    }
+
+    override fun toString(): String {
+        return pkgInfo.pname ?: "Unmapped"
     }
 
 }

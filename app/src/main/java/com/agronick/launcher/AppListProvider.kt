@@ -1,9 +1,11 @@
 package com.agronick.launcher
 
 import android.content.Context
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.json.JSONException
 import org.json.JSONObject
 import timber.log.Timber
 import java.io.File
@@ -14,7 +16,7 @@ import java.io.FileWriter
 class AppListProvider(appList: List<PInfo>, context: Context) {
 
     val positions = HashMap<Int, HashMap<Int, PInfo?>>().withDefault { HashMap() }
-    val filePath = "${context.dataDir}/appPositions.json"
+    val filePath = "${context.dataDir}/appPositions2.json"
     val mapping = appList.map {
         it.asKey() to it
     }.toMap().toMutableMap()
@@ -29,7 +31,12 @@ class AppListProvider(appList: List<PInfo>, context: Context) {
         }
         val file = FileReader(filePath)
         file.readText().let {
-            val json = JSONObject(it)
+            val json = try {
+                JSONObject(it)
+            } catch (e: JSONException) {
+                Timber.e("JSON corrupted")
+                return
+            }
             json.keys().forEach { rowKey ->
                 val rowInt = rowKey.toInt()
                 val row = json.getJSONObject(rowKey)
@@ -77,6 +84,7 @@ class AppListProvider(appList: List<PInfo>, context: Context) {
         }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     fun save() {
         GlobalScope.launch(Dispatchers.IO) {
             val jsonObject = JSONObject()

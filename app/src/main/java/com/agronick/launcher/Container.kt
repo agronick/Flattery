@@ -9,10 +9,9 @@ import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 class Container(val appList: AppListProvider, density: Float) {
-    private val rows: List<List<List<App>>>
     val appCircleSize = (StaticValues.normalAppSize * density).roundToInt()
     val appCircleMargin = (StaticValues.margin * density).roundToInt()
-    private val iterate: List<App>
+    private val flatAppList: List<App>
     var lastCircle: Circle? = null
 
     var topLimit = 0f
@@ -22,8 +21,7 @@ class Container(val appList: AppListProvider, density: Float) {
 
     private var equalizerOffset = 1.1f
 
-    init {
-        /*
+    init {/*
         Tries to set up a rough circle shape
         Rows are stored using the outer array index as y pos and inner array as x pos
         The middle array holds up to 2 items, one to be drawn at positive y and one at negative y
@@ -36,56 +34,46 @@ class Container(val appList: AppListProvider, density: Float) {
         val appDiam = appRadius * 2
         val appRadiusSquared = appRadius * appRadius
         val pkgIterator = appList.getPkgIterator()
-        rows = 0.rangeTo(floor(appRadius).toInt()).mapNotNull outer@{ row ->
-            // Pythagorean theorem - row length at each level
-            val rowDiam =
-                ((if (row == 0) appDiam else (sqrt(appRadiusSquared - (row * row)) * 2) - 1)).roundToInt()
-            val rowGroup = (0..(
-                    if (row == 0) 0 else 1)
-                    ).mapNotNull middle@{ sect ->
-                    val cols = (0..rowDiam).mapNotNull inner@{ col ->
-                        if (pkgIterator.hasMore()) {
-                            return@inner App(
-                                pkgIterator.get(
-                                    row, if (sect == 0) {
-                                        col
-                                    } else {
-                                        -col
-                                    }
-                                ) ?: PInfo.getBlank(),
-                                appCircleSize
-                            )
+
+        flatAppList = sequence {
+            0.rangeTo(floor(appRadius).toInt()).forEach { row ->
+                // Pythagorean theorem - row length at each level
+                val rowDiam = (
+                        if (row == 0) {
+                            appDiam
+                        } else {
+                            (sqrt(appRadiusSquared - (row * row)) * 2) - 1
                         }
-                        return@inner null
+                        ).roundToInt()
+                (0..kotlin.math.min(row, 1)).forEach { sect ->
+                    (0..rowDiam).forEach { col ->
+                        if (pkgIterator.hasMore()) {
+                            val maybeNegativeRow = if (sect == 0) {
+                                row
+                            } else {
+                                -row
+                            }
+                            yield(App(
+                                pkgIterator.get(
+                                    maybeNegativeRow, col
+                                ) ?: PInfo.getBlank(), appCircleSize
+                            ).apply {
+                                assignedPos = Pair(maybeNegativeRow, col)
+                            })
+                        }
                     }
-                    return@middle cols.ifEmpty { null }
-                }
-            return@outer rowGroup.ifEmpty { null }
-        }
-
-
-        appList.save()
-
-        iterate = sequence {
-            rows.forEachIndexed { rowCount, parts ->
-                parts.getOrNull(0)?.forEachIndexed { colCount, app ->
-                    yield(app.apply {
-                        assignedPos = Pair(rowCount, colCount)
-                    })
-                }
-                parts.getOrNull(1)?.forEachIndexed { colCount, app ->
-                    yield(app.apply {
-                        assignedPos = Pair(-rowCount, colCount)
-                    })
                 }
             }
         }.toList()
+
+        appList.save()
+
         position()
     }
 
 
     private fun position() {
-        iterate.forEach { app ->
+        flatAppList.forEach { app ->
             val positions = calcPositions(app.assignedPos!!.first, app.assignedPos!!.second)
             app.left = positions.first
             app.top = positions.second
@@ -109,7 +97,14 @@ class Container(val appList: AppListProvider, density: Float) {
     }
 
     fun draw(canvas: Canvas) {
-        iterate.forEach {
+        flatAppList.filter {
+            return@filter if (it.drawLast) {
+                true
+            } else {
+                it.drawNormal(canvas)
+                false
+            }
+        }.forEach {
             it.drawNormal(canvas)
         }
     }
@@ -135,7 +130,7 @@ class Container(val appList: AppListProvider, density: Float) {
     }
 
     fun getAppAtPoint(point: Vector2, toIgnore: HashSet<App>? = null): App? {
-        return iterate.find {
+        return flatAppList.find {
             (if (toIgnore != null) !toIgnore.contains(it) else true) && it.intersects(
                 point
             )
@@ -145,11 +140,10 @@ class Container(val appList: AppListProvider, density: Float) {
     fun prepare(offsetLeft: Float, offsetTop: Float, size: Float) {
         lastCircle = Circle(
             Vector2(
-                -offsetLeft,
-                -offsetTop
-            ), ceil(size * 0.5).toFloat()
+                -offsetLeft, -offsetTop
+            ), ceil(size * 0.5f)
         )
-        iterate.forEach {
+        flatAppList.forEach {
             it.prepare(lastCircle!!)
         }
     }

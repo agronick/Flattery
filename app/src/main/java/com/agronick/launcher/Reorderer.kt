@@ -3,6 +3,7 @@ package com.agronick.launcher
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import androidx.core.animation.doOnEnd
+import timber.log.Timber
 import util.geometry.Circle
 import util.geometry.Vector2
 
@@ -12,11 +13,12 @@ class Reorderer(
     val invalidate: () -> Unit,
 ) {
     private var suppressedAppCopy: App = app.copy()
-    private var lastPosition = HashSet<App>()
+    var lastPosition = HashSet<App>()
     private val defaultCircleSize = container.appCircleSize
     private val appList = container.appList
 
     init {
+        app.drawLast = true
         lastPosition.add(app)
         suppressedAppCopy.hidden = true
         ValueAnimator.ofInt(app.size, (app.size * 1.4).toInt())
@@ -57,6 +59,7 @@ class Reorderer(
             playTogether(xAnim, yAnim)
             doOnEnd {
                 lastPosition.remove(app)
+                app.drawLast = false
             }
             start()
         }
@@ -66,7 +69,9 @@ class Reorderer(
         if (overApp == null) {
             animateAppPosition(app, suppressedAppCopy.left, suppressedAppCopy.top)
         } else {
+            Timber.i("Sending ${overApp} to ${suppressedAppCopy.left} ${suppressedAppCopy.top}")
             animateAppPosition(overApp, suppressedAppCopy.left, suppressedAppCopy.top)
+            Timber.i("Sending ${app} to ${overApp.left} ${overApp.top}")
             animateAppPosition(app, overApp.left, overApp.top)
             appList.swap(app, overApp)
             appList.save()
@@ -93,5 +98,4 @@ class Reorderer(
         }
         return null
     }
-
 }

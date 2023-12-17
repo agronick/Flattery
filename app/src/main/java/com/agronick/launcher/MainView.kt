@@ -2,15 +2,19 @@ package com.agronick.launcher
 
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.animation.doOnEnd
+import timber.log.Timber
 import util.geometry.Vector2
-import java.util.*
+import java.util.Timer
+import java.util.TimerTask
 
+@SuppressLint("ViewConstructor")
 class MainView(context: Context, appList: List<PInfo>) : View(context) {
     private var edgeTimer: Timer? = null
     private var density: Float = context.resources.displayMetrics.density
@@ -44,13 +48,6 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
     }
 
     var reorderer: Reorderer? = null
-
-    fun handleScroll(distanceX: Float, distanceY: Float) {
-        if (getActiveState() != STATE_NONE) return
-        offsetLeft -= distanceX
-        offsetTop -= distanceY
-        prepareInvalidate()
-    }
 
     fun resetReorderEdgeTimer() {
         edgeTimer?.cancel()
@@ -88,12 +85,19 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
             if (event.action == MotionEvent.ACTION_UP) {
                 reorderer!!.onStopReorder(
                     when (container.getLimit(offsetLeft, offsetTop, canvasSize)) {
-                        Pair(offsetLeft, offsetTop) -> container.getAppAtPoint(
-                            Vector2(
-                                offset.x,
-                                offset.y
-                            )
-                        )
+                        Pair(offsetLeft, offsetTop) -> {
+                            Timber.i("Looking up what is at ${offset.x} ${offset.y} to end reorder")
+                            container.getAppAtPoint(
+                                Vector2(
+                                    offset.x,
+                                    offset.y
+                                ),
+                                reorderer!!.lastPosition
+                            )?.also {
+                                Timber.i("Found ${it.pkgInfo.pname} at ${it.left} ${it.top} to swap with")
+                            }
+                        }
+
                         else -> null
                     }
                 )
@@ -111,10 +115,11 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
                 prepareInvalidate()
             }
         } else if (state == STATE_NONE) {
-            val app = container.getAppAtPoint(Vector2(offset.x, offset.y))
-            if (app != null) {
+            Timber.i("Looking up what is at ${offset.x} ${offset.y} to start reorder")
+            container.getAppAtPoint(Vector2(offset.x, offset.y))?.let {
+                Timber.i("Going to recorder ${it.pkgInfo.pname} at ${it.left} ${it.top}")
                 post {
-                    reorderer = Reorderer(container, app, ::prepareInvalidate)
+                    reorderer = Reorderer(container, it, ::prepareInvalidate)
                     performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
                 }
             }
@@ -212,10 +217,9 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
     fun getRelativePosition(point: Pair<Float, Float>? = null): Vector2 {
         val halfSize = canvasSize * 0.5f
         val pos = Vector2(halfSize + offsetLeft, halfSize + offsetTop)
-        if (point != null) {
-            return Vector2(point.first - pos.x, point.second - pos.y)
-        }
-        return pos
+        return point?.let {
+            Vector2(it.first - pos.x, it.second - pos.y)
+        } ?: pos
     }
 
     fun prepareInvalidate() {
