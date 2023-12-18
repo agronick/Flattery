@@ -3,9 +3,9 @@
 _Imitation is the sincerest form of flattery - Oscar Wilde_
 
 
-Flattery is a laucher for Wear OS that looks like the other guys launcher. Install it and use your watch's settings to bind it to a physical button.
+Flattery is a laucher for Wear OS that looks like the other guys launcher. Install it and use your watch's settings to bind it to a physical button. 
 
-It is not in the app store yet. See [this guide](https://www.reddit.com/r/WearOS/comments/p1l9of/how_to_install_apps_on_wear_os_all_methods/) on how to sideload apps on WearOS.
+It is not in the app store yet. See [this guide](https://www.reddit.com/r/WearOS/comments/p1l9of/how_to_install_apps_on_wear_os_all_methods/) on how to sideload apps on WearOS. Download the apk from the [releases](https://github.com/agronick/Flattery/releases) page.
 
 <img src="https://github.com/agronick/Flattery/assets/2042303/99917ae6-b39a-476e-bcc2-a85ea5ca265f" alt="Running on a Galaxy Watch 4" height="250"/>
 
