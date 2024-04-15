@@ -71,9 +71,13 @@ class MainActivity : Activity(), GestureDetector.OnGestureListener {
         val mainIntent = Intent(Intent.ACTION_MAIN, null)
         mainIntent.addCategory(Intent.CATEGORY_LAUNCHER)
         return packageManager.queryIntentActivities(mainIntent, 0).mapNotNull {
-            if (it.activityInfo.packageName.startsWith("com.agronick.launcher")) {
-                return@mapNotNull null
-            }
+         /* This is commented out because the line of code hides both the launcher and settings
+         application. This bug would need to be fixed before uncommenting */
+
+          //  if (it.activityInfo.packageName.startsWith("com.agronick.launcher")) {
+          //      return@mapNotNull null
+          //  }
+
             PInfo(
                 appname = it.activityInfo.packageName,
                 pname = it.activityInfo.packageName,

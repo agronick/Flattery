@@ -5,6 +5,7 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
+import android.preference.PreferenceManager
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
@@ -14,7 +15,11 @@ import util.geometry.Vector2
 import java.util.Timer
 import java.util.TimerTask
 
+
+
+
 @SuppressLint("ViewConstructor")
+
 class MainView(context: Context, appList: List<PInfo>) : View(context) {
     private var edgeTimer: Timer? = null
     private var density: Float = context.resources.displayMetrics.density
@@ -75,7 +80,7 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
                 }
                 prepareInvalidate()
             }
-        }, 0, 33)
+        }, 0, 60)
     }
 
     fun handleLongPress(event: MotionEvent) {
@@ -194,10 +199,15 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
                         invalidate()
                     }
                 }
-
+//App Opening Animation
         AnimatorSet().apply {
             duration = 400
-            playTogether(xAnimator, yAnimator, radiusAnimator)
+            val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+            val animationsEnabled = sharedPreferences.getBoolean("animations", true)
+            if (animationsEnabled) {
+                playTogether(xAnimator, yAnimator, radiusAnimator)
+            }
+            //     playTogether(xAnimator, yAnimator, radiusAnimator)
             doOnEnd {
                 postDelayed({
                     onPackageClick?.let { it1 -> it1(app.pkgInfo) }

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <SwitchPreference
+        android:key="animations"
+        android:title="Animation"
+        android:defaultValue="true"
+        android:summary="Enable/Disable launch animation"/>
+
+    <Preference
+        android:key="feedback"
+        android:title="Send feedback"
+        android:summary="Report technical issues or suggest new features" />
+
+</PreferenceScreen>
