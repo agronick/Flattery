@@ -1,0 +1,19 @@
+<!--Theme File for Preference Application-->
+
+<resources>
+
+    <color name="colorPrimary">#808080</color>
+    <color name="colorPrimaryDark">#3700B3</color>
+    <color name="colorAccent">#7842f5</color>
+    <color name="background">#121212</color>
+    <color name="textColor">#b1bbc9</color>
+    <style name="AppTheme" parent="Theme.AppCompat">
+        <!-- Customize theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:textColor">@color/textColor</item>
+    </style>
+
+</resources>
