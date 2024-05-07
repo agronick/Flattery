@@ -212,7 +212,7 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
                 postDelayed({
                     onPackageClick?.let { it1 -> it1(app.pkgInfo) }
                     openingApp = null
-                }, 200)
+                }, 0) // removed delay - unneeded - used to equal 200ms
             }
             start()
         }
