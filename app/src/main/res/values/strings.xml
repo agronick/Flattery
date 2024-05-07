@@ -5,4 +5,10 @@
     values-round/strings.xml for round devices.
     -->
     <string name="max_rows">Max rows</string>
+    <string name="title_activity_back_to_clock">BackToClock</string>
+    <!--
+    This string is used for square devices and overridden by hello_world in
+    values-round/strings.xml for round devices.
+    -->
+    <string name="hello_world">From the Square world,\nHello, %1$s!</string>
 </resources>

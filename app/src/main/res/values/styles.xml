@@ -7,6 +7,7 @@
     <color name="colorAccent">#7842f5</color>
     <color name="background">#121212</color>
     <color name="textColor">#b1bbc9</color>
+
     <style name="AppTheme" parent="Theme.AppCompat">
         <!-- Customize theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
@@ -14,6 +15,12 @@
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:windowBackground">@color/background</item>
         <item name="android:textColor">@color/textColor</item>
+    </style>
+
+    <style name="BackToClockTheme.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@android:color/black</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+        <item name="postSplashScreenTheme">@android:style/Theme.DeviceDefault</item>
     </style>
 
 </resources>
