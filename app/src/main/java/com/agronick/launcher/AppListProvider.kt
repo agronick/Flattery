@@ -16,7 +16,7 @@ import java.io.FileWriter
 class AppListProvider(appList: List<PInfo>, context: Context) {
 
     val positions = HashMap<Int, HashMap<Int, PInfo?>>().withDefault { HashMap() }
-    val filePath = "${context.dataDir}/appPositions2.json"
+    val filePath = "${context.dataDir}/appPositions.json"
     val mapping = appList.map {
         it.asKey() to it
     }.toMap().toMutableMap()
