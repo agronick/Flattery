@@ -22,16 +22,22 @@ class MainActivity : Activity(), GestureDetector.OnGestureListener {
     //Bezel scroll listener and conditional parameters for launcher zoom.
     override fun onGenericMotionEvent(event: MotionEvent): Boolean {
 
-        if (event.action == MotionEvent.ACTION_SCROLL && RotaryEncoderHelper.isFromRotaryEncoder(event)) {
+        if (event.action == MotionEvent.ACTION_SCROLL && RotaryEncoderHelper.isFromRotaryEncoder(
+                event
+            )
+        ) {
 
             val delta = -RotaryEncoderHelper.getRotaryAxisValue(event)
-            Log.d("MainActivity", "Before modification: ${StaticValues.normalAppSize} ${StaticValues.margin}")
+            Log.d(
+                "MainActivity",
+                "Before modification: ${StaticValues.normalAppSize} ${StaticValues.margin}"
+            )
 
             //If bezel is turned clockwise, increase size of icons up to a size of 24.
             if (delta > 0 && StaticValues.normalAppSize <= 24) {
-               StaticValues.normalAppSize++
+                StaticValues.normalAppSize++
             } else {
-            //If bezel is turned counter-clockwise, decrease size of icons down to a size of 12.
+                //If bezel is turned counter-clockwise, decrease size of icons down to a size of 12.
                 if (StaticValues.normalAppSize >= 12) {
                     StaticValues.normalAppSize--
                 }
@@ -40,7 +46,10 @@ class MainActivity : Activity(), GestureDetector.OnGestureListener {
             mainView.updateIconSize(StaticValues.normalAppSize)
             mainView.updateMarginSize(StaticValues.margin)
 
-            Log.d("MainActivity", "After modification: ${StaticValues.normalAppSize} ${StaticValues.margin}")
+            Log.d(
+                "MainActivity",
+                "After modification: ${StaticValues.normalAppSize} ${StaticValues.margin}"
+            )
             return true
 
         }
