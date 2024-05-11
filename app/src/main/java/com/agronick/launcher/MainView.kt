@@ -1,5 +1,6 @@
 package com.agronick.launcher
 
+import StaticValues
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
@@ -14,8 +15,7 @@ import timber.log.Timber
 import util.geometry.Vector2
 import java.util.Timer
 import java.util.TimerTask
-
-
+import kotlin.math.roundToInt
 
 
 @SuppressLint("ViewConstructor")
@@ -36,6 +36,39 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
     private val STATE_NONE = 0
     private val STATE_REORDERING = 1
     private val STATE_OPENING = 2
+
+    //Redraw icon size after onGenericMotion listener detects movement of bezel
+    fun updateIconSize(iconSize: Int) {
+        // Updates the value of appCircleSize in container file.
+        container.appCircleSize = (iconSize * density).roundToInt()
+        container.flatAppList.forEach {
+            app -> app.size = container.appCircleSize
+            app.prepare(container.lastCircle ?: return@forEach)
+        }
+
+        // Triggers an invalidate to update UI
+        prepareInvalidate()
+    }
+
+    //Redraw icon margin size after onGenericMotion listener detects movement of bezel
+    fun updateMarginSize(margin: Int) {
+        StaticValues.margin = margin // Update the static value for margin
+
+        // Update the margin size in the container
+        container.appCircleMargin = (margin * density).roundToInt()
+
+        // Update the position of each application with the new margin
+        container.flatAppList.forEach { app ->
+            val positions = container.calcPositions(app.assignedPos!!.first, app.assignedPos!!.second)
+            app.left = positions.first
+            app.top = positions.second
+        }
+
+
+        // Trigger an invalidate to update the UI
+        prepareInvalidate()
+    }
+
 
     private fun getActiveState(): Int {
         if (reorderer != null) return STATE_REORDERING

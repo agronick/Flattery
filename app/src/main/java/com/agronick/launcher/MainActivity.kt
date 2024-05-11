@@ -1,20 +1,52 @@
 package com.agronick.launcher
 
+import StaticValues
 import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.transition.Fade
+import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.Window
 import androidx.core.view.GestureDetectorCompat
+import com.google.android.wearable.input.RotaryEncoderHelper
 
 
 class MainActivity : Activity(), GestureDetector.OnGestureListener {
     private var wasScrolling = false
     private lateinit var mDetector: GestureDetectorCompat
     private lateinit var mainView: MainView
+
+    //Bezel scroll listener and conditional parameters for launcher zoom.
+    override fun onGenericMotionEvent(event: MotionEvent): Boolean {
+
+        if (event.action == MotionEvent.ACTION_SCROLL && RotaryEncoderHelper.isFromRotaryEncoder(event)) {
+
+            val delta = -RotaryEncoderHelper.getRotaryAxisValue(event)
+            Log.d("MainActivity", "Before modification: ${StaticValues.normalAppSize} ${StaticValues.margin}")
+
+            //If bezel is turned clockwise, increase size of icons up to a size of 24.
+            if (delta > 0 && StaticValues.normalAppSize <= 24) {
+               StaticValues.normalAppSize++
+            } else {
+            //If bezel is turned counter-clockwise, decrease size of icons down to a size of 12.
+                if (StaticValues.normalAppSize >= 12) {
+                    StaticValues.normalAppSize--
+                }
+            }
+
+            mainView.updateIconSize(StaticValues.normalAppSize)
+            mainView.updateMarginSize(StaticValues.margin)
+
+            Log.d("MainActivity", "After modification: ${StaticValues.normalAppSize} ${StaticValues.margin}")
+            return true
+
+        }
+        return super.onGenericMotionEvent(event)
+
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
