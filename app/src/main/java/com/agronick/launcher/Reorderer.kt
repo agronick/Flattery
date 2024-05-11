@@ -21,6 +21,7 @@ class Reorderer(
         app.zIndex = 2
         lastPosition.add(app)
         suppressedAppCopy.hidden = true
+        //Increased icon size when reordering application.
         ValueAnimator.ofInt(app.size, (app.size * 1.4).toInt())
             .apply {
                 duration = StaticValues.durationRise

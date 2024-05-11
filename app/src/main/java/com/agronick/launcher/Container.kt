@@ -9,9 +9,9 @@ import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 class Container(val appList: AppListProvider, density: Float) {
-    val appCircleSize = (StaticValues.normalAppSize * density).roundToInt()
-    val appCircleMargin = (StaticValues.margin * density).roundToInt()
-    private val flatAppList: List<App>
+    var appCircleSize = (StaticValues.normalAppSize * density).roundToInt()
+    var appCircleMargin = (StaticValues.margin * density).roundToInt()
+    val flatAppList: List<App>
     var lastCircle: Circle? = null
 
     var topLimit = 0f
@@ -102,17 +102,17 @@ class Container(val appList: AppListProvider, density: Float) {
         }
     }
 
-    private fun calcPositions(row: Int, col: Int): Pair<Float, Float> {
+    fun calcPositions(row: Int, col: Int): Pair<Float, Float> {
         var left = calcPosition(col) * equalizerOffset
         if (kotlin.math.abs(row) % 2 == 1) {
-            // Add offset for haxagon shape
+            // Add offset for hexagon shape
             left -= appCircleSize + appCircleMargin
         }
-        val top = (row * (appCircleSize * 2) + row * appCircleMargin).toFloat()
+        var top = (row * (appCircleSize * 2) + row * appCircleMargin).toFloat()
         return Pair(left, top)
     }
 
-    private fun calcPosition(num: Int): Float {
+     fun calcPosition(num: Int): Float {
         var pos = ceil(num * 0.5f)
         pos = pos * (appCircleSize * 2) + pos * appCircleMargin
         if (num % 2 == 0) {
