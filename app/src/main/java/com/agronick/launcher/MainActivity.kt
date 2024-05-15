@@ -102,13 +102,12 @@ class MainActivity : Activity(), GestureDetector.OnGestureListener {
     private fun getInstalledApps(): List<PInfo> {
         val mainIntent = Intent(Intent.ACTION_MAIN, null)
         mainIntent.addCategory(Intent.CATEGORY_LAUNCHER)
-        return packageManager.queryIntentActivities(mainIntent, 0).mapNotNull {
-         /* This is commented out because the line of code hides both the launcher and settings
-         application. This bug would need to be fixed before uncommenting */
 
-          //  if (it.activityInfo.packageName.startsWith("com.agronick.launcher")) {
-          //      return@mapNotNull null
-          //  }
+        val appName = applicationContext.packageName
+        val packages = packageManager.queryIntentActivities(mainIntent, 0).mapNotNull {
+            if (it.activityInfo.packageName == appName) {
+                return@mapNotNull null
+            }
 
             PInfo(
                 appname = it.activityInfo.packageName,
@@ -116,7 +115,25 @@ class MainActivity : Activity(), GestureDetector.OnGestureListener {
                 icon = it.activityInfo.loadIcon(packageManager),
                 activityName = it.activityInfo.name,
             )
-        }
+        }.toMutableList()
+
+        packages.add(
+            PInfo(
+                appname = appName,
+                pname = appName,
+                icon = getDrawable(R.mipmap.clock),
+                activityName = "${appName}.presentation.BackToClock",
+            )
+        )
+        packages.add(
+            PInfo(
+                appname = appName,
+                pname = appName,
+                icon = getDrawable(R.mipmap.ic_settings),
+                activityName = "${appName}.presentation.LauncherSettings",
+            )
+        )
+        return packages
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
