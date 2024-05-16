@@ -12,3 +12,5 @@ It is not in the app store yet. See [this guide](https://www.reddit.com/r/WearOS
 <img src="https://github.com/agronick/Flattery/assets/2042303/c9ac9c51-7ba8-42c3-8e47-1c4e8c18b1ea" alt="Running on a Galaxy Watch 4" width="250"/>
 
 <img src="https://github.com/agronick/Flattery/assets/2042303/e4caf242-4fb3-4d02-a608-4b793ad48b8d" alt="Reordering" width="250"/>
+<img src="https://github.com/JesusC0der/Flattery/assets/57578170/a1ff84f8-ab70-4755-8eb1-f236eeeb9f8b" width="250"/>
+
