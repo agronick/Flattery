@@ -10,7 +10,6 @@ import android.preference.PreferenceManager
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
-import androidx.core.animation.doOnEnd
 import timber.log.Timber
 import util.geometry.Vector2
 import java.util.Timer
@@ -41,8 +40,8 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
     fun updateIconSize(iconSize: Int) {
         // Updates the value of appCircleSize in container file.
         container.appCircleSize = (iconSize * density).roundToInt()
-        container.flatAppList.forEach {
-            app -> app.size = container.appCircleSize
+        container.flatAppList.forEach { app ->
+            app.size = container.appCircleSize
             app.prepare(container.lastCircle ?: return@forEach)
         }
 
@@ -59,7 +58,8 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
 
         // Update the position of each application with the new margin
         container.flatAppList.forEach { app ->
-            val positions = container.calcPositions(app.assignedPos!!.first, app.assignedPos!!.second)
+            val positions =
+                container.calcPositions(app.assignedPos!!.first, app.assignedPos!!.second)
             app.left = positions.first
             app.top = positions.second
         }
@@ -241,12 +241,8 @@ class MainView(context: Context, appList: List<PInfo>) : View(context) {
                 playTogether(xAnimator, yAnimator, radiusAnimator)
             }
             //     playTogether(xAnimator, yAnimator, radiusAnimator)
-            doOnEnd {
-                postDelayed({
-                    onPackageClick?.let { it1 -> it1(app.pkgInfo) }
-                    openingApp = null
-                }, 0) // removed delay - unneeded - used to equal 200ms
-            }
+            onPackageClick?.let { it1 -> it1(app.pkgInfo) }
+            openingApp = null
             start()
         }
     }
